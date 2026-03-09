@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bouqu'art - Boutique</title>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="#top" class="brand" aria-label="Retour à l'accueil">
+        <h1>Bouqu'art</h1>
+        <p>Des bouquets en satin, élégants & durables</p>
+      </a>
+      <div class="header-actions">
+        <button id="ordersButton" class="btn btn-secondary" type="button">
+          📦 Mes commandes
+        </button>
+        <button id="cartButton" class="btn btn-secondary" type="button">
+          🛒 Mon panier (<span id="cartCount">0</span>)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h2>Offrez un bouquet qui dure</h2>
+      <p>Nos bouquets en satin sont faits à la main. Parfaits pour les cadeaux, mariages et décoration.</p>
+      <a href="#catalog" class="btn btn-primary">Voir les bouquets</a>
+    </section>
+
+    <section id="catalog" class="catalog">
+      <h2>Nos Bouquets</h2>
+      <div id="products" class="products"></div>
+    </section>
+
+    <section class="about">
+      <h2>Pourquoi choisir le satin ?</h2>
+      <ul>
+        <li>Durée de vie prolongée : pas de fanage</li>
+        <li>Entretien facile : laver à la main, sécher à plat</li>
+        <li>Finition luxueuse et personnalisable</li>
+      </ul>
+    </section>
+
+    <footer class="footer">
+      <div class="footer__info">
+        <p>© <span id="year"></span> Bouqu'art — Vente de bouquets en satin.</p>
+        <p>Contact : <a href="mailto:contact@bouquart.fr">contact@bouquart.fr</a> · Tél : +33 6 12 34 56 78</p>
+        <p>Adresse : 15 rue des Roses, 75000 Paris</p>
+        <p>Modes de paiement acceptés : Carte bancaire, PayPal, Virement</p>
+      </div>
+      <p class="footer__note">
+        Ce site simule un panier et une validation de commande (aucun paiement réel n'est effectué).
+      </p>
+    </footer>
+  </main>
+
+  <div id="cartModal" class="modal" aria-hidden="true">
+    <div class="modal__backdrop" data-close="true"></div>
+    <div class="modal__panel" role="dialog" aria-modal="true" aria-label="Panier">
+      <header class="modal__header">
+        <h2>Mon panier</h2>
+        <button class="modal__close" data-close="true" aria-label="Fermer">✕</button>
+      </header>
+      <section class="modal__body">
+        <div id="cartItems" class="cart-items"></div>
+
+        <div class="checkout">
+          <h3>Informations client</h3>
+          <div class="checkout__grid">
+            <label for="customerName">Nom complet</label>
+            <input id="customerName" type="text" placeholder="Jean Dupont" required />
+
+            <label for="customerEmail">Email</label>
+            <input id="customerEmail" type="email" placeholder="jean@example.com" required />
+
+            <label for="customerAddress">Adresse</label>
+            <input id="customerAddress" type="text" placeholder="123 rue des Fleurs" required />
+
+            <label for="paymentMethod">Mode de paiement</label>
+            <select id="paymentMethod" required>
+              <option value="">Sélectionnez</option>
+              <option value="Carte bancaire">Carte bancaire</option>
+              <option value="PayPal">PayPal</option>
+              <option value="Virement">Virement</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="cart-summary">
+          <div>Montant total :</div>
+          <div class="cart-total">0,00 €</div>
+        </div>
+      </section>
+      <footer class="modal__footer">
+        <button id="clearCart" class="btn btn-secondary">Vider le panier</button>
+        <button id="checkout" class="btn btn-primary">Valider la commande</button>
+      </footer>
+    </div>
+  </div>
+
+  <div id="ordersModal" class="modal" aria-hidden="true">
+    <div class="modal__backdrop" data-close="true"></div>
+    <div class="modal__panel" role="dialog" aria-modal="true" aria-label="Mes commandes">
+      <header class="modal__header">
+        <h2>Mes commandes</h2>
+        <button class="modal__close" data-close="true" aria-label="Fermer">✕</button>
+      </header>
+      <section class="modal__body">
+        <div id="ordersList" class="orders-list"></div>
+      </section>
+      <footer class="modal__footer">
+        <button id="closeOrders" class="btn btn-secondary" data-close="true">Fermer</button>
+      </footer>
+    </div>
+  </div>
+
+  <script src="../script.js"></script>
+</body>
+</html>

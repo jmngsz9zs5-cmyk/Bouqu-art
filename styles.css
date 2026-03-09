@@ -203,6 +203,19 @@ a {
   flex: 1;
 }
 
+.product__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.85rem;
+  margin-top: 0.75rem;
+  color: var(--muted);
+}
+
+.product__stock {
+  font-size: 0.9rem;
+}
+
 .product__footer {
   display: flex;
   align-items: center;

@@ -1,40 +1,19 @@
-const PRODUCTS = [
-  {
-    id: "rosa-rose",
-    title: "Rosa Rose",
-    description: "Petit bouquet romantique en satin, tons rose & blanc.",
-    price: 34.9,
-    image:
-      "https://images.unsplash.com/photo-1534847611840-513c6f0b8a20?auto=format&fit=crop&w=1000&q=70",
-  },
-  {
-    id: "elegance-blanche",
-    title: "Élégance Blanche",
-    description: "Grand bouquet blanc, parfait pour mariages ou décoration.",
-    price: 49.0,
-    image:
-      "https://images.unsplash.com/photo-1581320540865-8ee3e4e1fc3c?auto=format&fit=crop&w=1000&q=70",
-  },
-  {
-    id: "champetre",
-    title: "Champêtre",
-    description: "Bouquet champêtre en satin avec touches de verdure.",
-    price: 39.5,
-    image:
-      "https://images.unsplash.com/photo-1529973565455-7b12b6d0c8ab?auto=format&fit=crop&w=1000&q=70",
-  },
-  {
-    id: "luxe-cerise",
-    title: "Luxe Cerise",
-    description: "Bowquets luxueux en rouge profond, idéal cadeau premium.",
-    price: 59.9,
-    image:
-      "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=1000&q=70",
-  },
-];
+let PRODUCTS = [];
 
 const STORAGE_KEY = "bouquart-cart-v1";
 const ORDERS_KEY = "bouquart-orders-v1";
+
+async function fetchProducts() {
+  try {
+    const response = await fetch("/api/products.php");
+    if (!response.ok) return [];
+    const json = await response.json();
+    if (!json.ok) return [];
+    return json.products;
+  } catch {
+    return [];
+  }
+}
 
 function formatEuro(amount) {
   return amount.toLocaleString("fr-FR", {
@@ -81,6 +60,15 @@ function getCartTotal(cart) {
     if (!product) return total;
     return total + product.price * qty;
   }, 0);
+}
+
+function getProductStock(id) {
+  const product = PRODUCTS.find((p) => p.id === id);
+  return product ? (product.stock ?? 0) : 0;
+}
+
+function getRemainingStock(id, cart) {
+  return Math.max(0, getProductStock(id) - (cart[id] || 0));
 }
 
 function validateEmail(email) {
@@ -193,7 +181,7 @@ async function renderOrdersModal() {
   });
 }
 
-function renderProducts() {
+function renderProducts(cart) {
   const container = document.getElementById("products");
   container.innerHTML = "";
 
@@ -201,14 +189,22 @@ function renderProducts() {
     const card = document.createElement("article");
     card.className = "product";
 
+    const remaining = getRemainingStock(product.id, cart);
+    const isSoldOut = remaining <= 0;
+
     card.innerHTML = `
       <img class="product__image" src="${product.image}" alt="${product.title}" />
       <div class="product__body">
         <h3 class="product__title">${product.title}</h3>
         <p class="product__desc">${product.description}</p>
-        <div class="product__footer">
+        <div class="product__meta">
           <div class="product__price">${formatEuro(product.price)}</div>
-          <button class="btn btn-primary product__add" data-product="${product.id}">Ajouter</button>
+          <div class="product__stock">Stock : ${remaining}</div>
+        </div>
+        <div class="product__footer">
+          <button class="btn btn-primary product__add" data-product="${product.id}" ${
+      isSoldOut ? "disabled" : ""
+    }>${isSoldOut ? "Rupture" : "Ajouter"}</button>
         </div>
       </div>
     `;
@@ -313,15 +309,16 @@ function showToast(message) {
   }, 2200);
 }
 
-function init() {
-  renderProducts();
-
+async function init() {
   const cart = loadCart();
   updateCartCount(cart);
 
+  PRODUCTS = await fetchProducts();
+  renderProducts(cart);
+
   document.getElementById("year").textContent = new Date().getFullYear();
 
-  // Si le backend est dispo, on précharge les commandes existantes pour le vendeur.
+  // Charge les commandes existantes en local + backend
   renderOrdersModal();
 
   document.getElementById("products").addEventListener("click", (event) => {
@@ -330,9 +327,17 @@ function init() {
 
     const productId = button.dataset.product;
     const current = loadCart();
+    const remaining = getRemainingStock(productId, current);
+
+    if (remaining <= 0) {
+      showToast("Stock insuffisant pour ce produit.");
+      return;
+    }
+
     current[productId] = (current[productId] ?? 0) + 1;
     saveCart(current);
 
+    renderProducts(current);
     showToast("Ajouté au panier !");
   });
 
@@ -367,9 +372,16 @@ function init() {
     const cartState = loadCart();
 
     if (event.target.matches(".qty-increase")) {
+      const remaining = getRemainingStock(productId, cartState);
+      if (remaining <= 0) {
+        showToast("Stock insuffisant pour augmenter.");
+        return;
+      }
+
       cartState[productId] = (cartState[productId] ?? 0) + 1;
       saveCart(cartState);
       renderCartModal(cartState);
+      renderProducts(cartState);
       return;
     }
 
@@ -382,6 +394,7 @@ function init() {
       }
       saveCart(cartState);
       renderCartModal(cartState);
+      renderProducts(cartState);
       return;
     }
 
@@ -389,6 +402,7 @@ function init() {
       delete cartState[productId];
       saveCart(cartState);
       renderCartModal(cartState);
+      renderProducts(cartState);
       return;
     }
   });
@@ -396,9 +410,10 @@ function init() {
   document.getElementById("clearCart").addEventListener("click", () => {
     saveCart({});
     renderCartModal({});
+    renderProducts({});
   });
 
-  document.getElementById("checkout").addEventListener("click", () => {
+  document.getElementById("checkout").addEventListener("click", async () => {
     const cartState = loadCart();
     const total = getCartTotal(cartState);
     if (total <= 0) {
@@ -434,29 +449,6 @@ function init() {
       document.getElementById("paymentMethod").focus();
       return;
     }
-
-    const order = {
-      id: Math.floor(Math.random() * 900000) + 100000,
-      date: new Date().toISOString(),
-      total,
-      paymentMethod: payment,
-      customer: {
-        name,
-        email,
-        address,
-      },
-      items: Object.entries(cartState).map(([id, qty]) => {
-        const product = PRODUCTS.find((p) => p.id === id);
-        return {
-          id,
-          title: product?.title ?? id,
-          qty,
-          subtotal: product ? product.price * qty : 0,
-        };
-      }),
-    };
-
-    addOrder(order);
 
     const order = {
       id: Math.floor(Math.random() * 900000) + 100000,
@@ -516,6 +508,9 @@ function init() {
     saveCart({});
     clearCheckoutForm();
     renderCartModal({});
+
+    PRODUCTS = await fetchProducts();
+    renderProducts({});
   });
 
   document.addEventListener("keydown", (event) => {

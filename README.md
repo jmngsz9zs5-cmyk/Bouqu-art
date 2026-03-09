@@ -4,9 +4,10 @@ Site vitrine et catalogue pour une boutique de bouquets en satin.
 
 ## 🧩 Structure du projet
 
-- `index.html` : page principale avec catalogue et panier.
+- `/shop/index.html` : boutique en ligne (achat de bouquets).
+- `/admin/index.php` : interface de gestion (produits, commandes).
 - `styles.css` : styles de l'interface.
-- `script.js` : logique de panier, commandes et historique (stockées en `localStorage`) et interactions.
+- `script.js` : logique du panier, commandes et historique (stockées en `localStorage`) et interactions.
 
 ## ▶️ Lancer localement
 
@@ -23,6 +24,9 @@ Ouvrez `index.html` dans un navigateur moderne (Chrome, Firefox, Edge).
    ```
 3. Ouvrez `http://localhost:8000` dans votre navigateur.
 
-Le backend stocke les commandes dans `data/orders.json` et permet au vendeur de les consulter via le bouton **Mes commandes** (dans le site) ou en ouvrant directement :
+Le backend stocke les commandes dans `data/orders.json` et les produits dans `data/products.json`.
 
-- `http://localhost:8000/admin/` (interface d'administration simple)
+Une fois le serveur démarré, accédez à :
+
+- Boutique client : `http://localhost:8000/shop/`
+- Espace vendeur (gestion des produits + commandes) : `http://localhost:8000/admin/`
