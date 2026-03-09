@@ -69,6 +69,13 @@ a {
   justify-content: space-between;
 }
 
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 .brand h1 {
   margin: 0;
   font-size: 1.95rem;
@@ -297,6 +304,51 @@ a {
   padding: 1rem 1.5rem 0.75rem;
   overflow: auto;
   flex: 1;
+}
+
+.orders-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.order {
+  padding: 0.9rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 248, 244, 0.9);
+}
+
+.order__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.order__header span {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.order__items {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+}
+
+.order__items li {
+  margin: 0.35rem 0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+}
+
+.order__total {
+  margin-top: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
 }
 
 .cart-items {

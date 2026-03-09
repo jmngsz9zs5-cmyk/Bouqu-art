@@ -34,12 +34,23 @@ const PRODUCTS = [
 ];
 
 const STORAGE_KEY = "bouquart-cart-v1";
+const ORDERS_KEY = "bouquart-orders-v1";
 
 function formatEuro(amount) {
   return amount.toLocaleString("fr-FR", {
     style: "currency",
     currency: "EUR",
     minimumFractionDigits: 2,
+  });
+}
+
+function formatDate(date) {
+  return new Date(date).toLocaleString("fr-FR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -76,6 +87,27 @@ function validateEmail(email) {
   return /^\S+@\S+\.\S+$/.test(email);
 }
 
+function loadOrders() {
+  const stored = window.localStorage.getItem(ORDERS_KEY);
+  if (!stored) return [];
+
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return [];
+  }
+}
+
+function saveOrders(orders) {
+  window.localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+}
+
+function addOrder(order) {
+  const orders = loadOrders();
+  orders.unshift(order);
+  saveOrders(orders);
+}
+
 function clearCheckoutForm() {
   const fields = [
     "customerName",
@@ -93,6 +125,71 @@ function clearCheckoutForm() {
     } else {
       el.value = "";
     }
+  });
+}
+
+async function fetchOrders() {
+  try {
+    const response = await fetch("/api/orders.php");
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (!data.ok) return null;
+    return data.orders;
+  } catch {
+    return null;
+  }
+}
+
+async function renderOrdersModal() {
+  const list = document.getElementById("ordersList");
+  const stored = loadOrders();
+
+  // Affiche d'abord les commandes locale (en mode démo)
+  let orders = stored;
+
+  // Si le backend répond, on le charge et on écrase l'affichage local
+  const remote = await fetchOrders();
+  if (remote) {
+    orders = remote;
+    saveOrders(remote);
+  }
+
+  if (orders.length === 0) {
+    list.innerHTML = `<p>Vous n'avez pas encore passé de commande.</p>`;
+    return;
+  }
+
+  list.innerHTML = "";
+
+  orders.forEach((order) => {
+    const container = document.createElement("div");
+    container.className = "order";
+
+    container.innerHTML = `
+      <div class="order__header">
+        <strong>Commande #${order.id}</strong>
+        <span>${formatDate(order.date)}</span>
+      </div>
+      <div><strong>Client:</strong> ${order.customer.name} — ${order.customer.email}</div>
+      <div><strong>Adresse:</strong> ${order.customer.address}</div>
+      <div><strong>Paiement:</strong> ${order.paymentMethod}</div>
+      <ul class="order__items">
+        ${order.items
+          .map(
+            (item) =>
+              `<li><span>${item.title} × ${item.qty}</span><span>${formatEuro(
+                item.subtotal
+              )}</span></li>`
+          )
+          .join("")}
+      </ul>
+      <div class="order__total">
+        <span>Total</span>
+        <span>${formatEuro(order.total)}</span>
+      </div>
+    `;
+
+    list.appendChild(container);
   });
 }
 
@@ -165,10 +262,17 @@ function openCart() {
   modal.setAttribute("aria-hidden", "false");
 }
 
-function closeCart() {
-  const modal = document.getElementById("cartModal");
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
+function openOrders() {
+  const modal = document.getElementById("ordersModal");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeAllModals() {
+  document.querySelectorAll(".modal.open").forEach((modal) => {
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+  });
 }
 
 function showToast(message) {
@@ -217,6 +321,9 @@ function init() {
 
   document.getElementById("year").textContent = new Date().getFullYear();
 
+  // Si le backend est dispo, on précharge les commandes existantes pour le vendeur.
+  renderOrdersModal();
+
   document.getElementById("products").addEventListener("click", (event) => {
     const button = event.target.closest("button[data-product]");
     if (!button) return;
@@ -236,10 +343,20 @@ function init() {
     openCart();
   });
 
+  const ordersButton = document.getElementById("ordersButton");
+  ordersButton.addEventListener("click", () => {
+    renderOrdersModal();
+    openOrders();
+  });
+
   const closeButtons = document.querySelectorAll("[data-close]");
   closeButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
-      closeCart();
+      const modal = btn.closest(".modal");
+      if (modal) {
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+      }
     });
   });
 
@@ -318,9 +435,83 @@ function init() {
       return;
     }
 
-    showToast(
-      `Merci ${name} ! Votre commande de ${formatEuro(total)} a été enregistrée.`
-    );
+    const order = {
+      id: Math.floor(Math.random() * 900000) + 100000,
+      date: new Date().toISOString(),
+      total,
+      paymentMethod: payment,
+      customer: {
+        name,
+        email,
+        address,
+      },
+      items: Object.entries(cartState).map(([id, qty]) => {
+        const product = PRODUCTS.find((p) => p.id === id);
+        return {
+          id,
+          title: product?.title ?? id,
+          qty,
+          subtotal: product ? product.price * qty : 0,
+        };
+      }),
+    };
+
+    addOrder(order);
+
+    const order = {
+      id: Math.floor(Math.random() * 900000) + 100000,
+      date: new Date().toISOString(),
+      total,
+      paymentMethod: payment,
+      customer: {
+        name,
+        email,
+        address,
+      },
+      items: Object.entries(cartState).map(([id, qty]) => {
+        const product = PRODUCTS.find((p) => p.id === id);
+        return {
+          id,
+          title: product?.title ?? id,
+          qty,
+          subtotal: product ? product.price * qty : 0,
+        };
+      }),
+    };
+
+    const sendToServer = async () => {
+      try {
+        const response = await fetch("/api/orders.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(order),
+        });
+
+        const result = await response.json();
+        if (result.ok) {
+          showToast(
+            `Merci ${name} ! Votre commande de ${formatEuro(total)} a été envoyée.`
+          );
+          return true;
+        }
+
+        console.warn("Échec envoi commande", result);
+        return false;
+      } catch (error) {
+        console.warn("Erreur envoi commande", error);
+        return false;
+      }
+    };
+
+    const sent = await sendToServer();
+
+    if (!sent) {
+      showToast(
+        "Commande enregistrée en local (serveur indisponible). Réessayez plus tard."
+      );
+    }
+
+    addOrder(order);
 
     saveCart({});
     clearCheckoutForm();
@@ -328,8 +519,8 @@ function init() {
   });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && document.getElementById("cartModal").classList.contains("open")) {
-      closeCart();
+    if (event.key === "Escape") {
+      closeAllModals();
     }
   });
 }

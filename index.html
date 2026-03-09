@@ -13,9 +13,14 @@
         <h1>Bouqu'art</h1>
         <p>Des bouquets en satin, élégants & durables</p>
       </a>
-      <button id="cartButton" class="btn btn-secondary">
-        🛒 Mon panier (<span id="cartCount">0</span>)
-      </button>
+      <div class="header-actions">
+        <button id="ordersButton" class="btn btn-secondary" type="button">
+          📦 Mes commandes
+        </button>
+        <button id="cartButton" class="btn btn-secondary" type="button">
+          🛒 Mon panier (<span id="cartCount">0</span>)
+        </button>
+      </div>
     </div>
   </header>
 
@@ -93,6 +98,24 @@
       <footer class="modal__footer">
         <button id="clearCart" class="btn btn-secondary">Vider le panier</button>
         <button id="checkout" class="btn btn-primary">Valider la commande</button>
+      </footer>
+    </div>
+  </div>
+
+  <div id="ordersModal" class="modal" aria-hidden="true">
+    <div class="modal__backdrop" data-close="true"></div>
+    <div class="modal__panel" role="dialog" aria-modal="true" aria-label="Mes commandes">
+      <header class="modal__header">
+        <h2>Mes commandes</h2>
+        <button class="modal__close" data-close="true" aria-label="Fermer">✕</button>
+      </header>
+      <section class="modal__body">
+        <div id="ordersList" class="orders-list">
+          <p>Chargement…</p>
+        </div>
+      </section>
+      <footer class="modal__footer">
+        <button id="closeOrders" class="btn btn-secondary" data-close="true">Fermer</button>
       </footer>
     </div>
   </div>
