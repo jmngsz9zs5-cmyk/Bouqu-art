@@ -23,4 +23,6 @@ Ouvrez `index.html` dans un navigateur moderne (Chrome, Firefox, Edge).
    ```
 3. Ouvrez `http://localhost:8000` dans votre navigateur.
 
-Le backend stocke les commandes dans `data/orders.json` et permet au vendeur de les consulter via le bouton **Mes commandes**.
+Le backend stocke les commandes dans `data/orders.json` et permet au vendeur de les consulter via le bouton **Mes commandes** (dans le site) ou en ouvrant directement :
+
+- `http://localhost:8000/admin/` (interface d'administration simple)
